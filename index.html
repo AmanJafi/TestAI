@@ -2,319 +2,776 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Guessing Game Chatbot</title>
-  <style>
-    :root {
-      --bg: #f5f7fa;
-      --chat-bg: #ffffff;
-      --bot-bubble: #e1f5fe;
-      --user-bubble: #f1f8e9;
-      --accent: #0288d1;
-      --text: #37474f;
-      --secondary-text: #78909c;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(180deg, #87CEEB 0%, #B0D8E8 40%, #E8F4F8 70%, #FFFFFF 100%);
+            --message-bot-bg: #fafbfc;
+            --message-bot-text: #2c3e50;
+            --message-user-bg: linear-gradient(135deg, #a8c7e7 0%, #8fb4d9 100%);
+            --message-user-text: #1a1a1a;
+            --input-bg: rgba(255, 255, 255, 0.95);
+            --input-border: #d4e3f0;
+            --text-color: #2c3e50;
+            --penguin-body: #2C3E50;
+            --footer-border: rgba(168, 199, 231, 0.3);
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+        body.dark-mode {
+            --bg-gradient: linear-gradient(180deg, #0f172a 0%, #1e293b 40%, #334155 70%, #1e293b 100%);
+            --message-bot-bg: #1e293b;
+            --message-bot-text: #f1f5f9;
+            --message-user-bg: linear-gradient(135deg, #334155 0%, #475569 100%);
+            --message-user-text: #f8fafc;
+            --input-bg: rgba(15, 23, 42, 0.95);
+            --input-border: #334155;
+            --text-color: #f1f5f9;
+            --penguin-body: #0f172a;
+            --footer-border: rgba(51, 65, 85, 0.5);
+        }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    #game-container {
-      width: 100%;
-      max-width: 500px;
-      height: 90vh;
-      background: var(--chat-bg);
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      border-radius: 15px;
-      overflow: hidden;
-      margin: 10px;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-gradient);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: background 0.3s ease;
+            color: var(--text-color);
+        }
 
-    #chat-window {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      background-color: #fafbfc;
-    }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
 
-    .message {
-      max-width: 80%;
-      padding: 12px 16px;
-      border-radius: 18px;
-      font-size: 14px;
-      line-height: 1.4;
-      animation: slideUp 0.3s ease-out;
-    }
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
 
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
+        .theme-toggle i {
+            font-size: 20px;
+        }
 
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+        body::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background:
+                linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.1) 20%),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.05) 2px,
+                    rgba(255, 255, 255, 0.05) 4px);
+            pointer-events: none;
+            z-index: 0;
+        }
 
-    .bot {
-      align-self: flex-start;
-      background-color: var(--bot-bubble);
-      border-bottom-left-radius: 2px;
-      color: #01579b;
-    }
+        /* Snow peaks in background */
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: 100px;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background:
+                linear-gradient(120deg, transparent 0%, transparent 10%, #E8F4F8 10%, #FFFFFF 15%, transparent 15%, transparent 25%, #E8F4F8 25%, #FFFFFF 32%, transparent 32%, transparent 45%, #E8F4F8 45%, #FFFFFF 50%, transparent 50%, transparent 60%, #E8F4F8 60%, #FFFFFF 68%, transparent 68%, transparent 75%, #E8F4F8 75%, #FFFFFF 82%, transparent 82%);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
 
-    .user {
-      align-self: flex-end;
-      background-color: var(--user-bubble);
-      border-bottom-right-radius: 2px;
-      text-align: right;
-      color: #33691e;
-    }
+        /* Penguin illustration */
+        .penguin {
+            position: fixed;
+            bottom: 120px;
+            right: 40px;
+            width: 100px;
+            height: 120px;
+            z-index: 1;
+            animation: waddle 3s ease-in-out infinite;
+        }
 
-    #input-area {
-      padding: 15px;
-      border-top: 1px solid #eee;
-      display: flex;
-      gap: 10px;
-      background: white;
-    }
+        @keyframes waddle {
 
-    #user-input {
-      flex: 1;
-      padding: 12px 20px;
-      border: 2px solid #edf2f7;
-      border-radius: 25px;
-      outline: none;
-      font-size: 14px;
-      transition: border-color 0.2s;
-    }
+            0%,
+            100% {
+                transform: rotate(-2deg);
+            }
 
-    #user-input:focus {
-      border-color: var(--accent);
-    }
+            50% {
+                transform: rotate(2deg);
+            }
+        }
 
-    #send-btn {
-      background-color: var(--accent);
-      color: white;
-      border: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
+        .penguin-body {
+            position: absolute;
+            width: 60px;
+            height: 70px;
+            background: var(--penguin-body);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            bottom: 20px;
+            left: 20px;
+            transition: background 0.3s ease;
+        }
 
-    #send-btn:hover {
-      background-color: #0277bd;
-    }
+        .penguin-belly {
+            position: absolute;
+            width: 40px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            bottom: 25px;
+            left: 30px;
+        }
 
-    #send-btn:active {
-      transform: scale(0.9);
-    }
+        .penguin-head {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: var(--penguin-body);
+            border-radius: 50%;
+            bottom: 70px;
+            left: 25px;
+            transition: background 0.3s ease;
+        }
 
-    #send-btn:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
+        .penguin-eye {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            top: 18px;
+        }
 
-    .game-stats {
-      text-align: center;
-      font-size: 13px;
-      color: var(--secondary-text);
-      margin: 5px 0;
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 10px;
-      border: 1px solid #eee;
-    }
+        .penguin-eye.left {
+            left: 12px;
+        }
 
-    #replay-btn {
-      display: none;
-      margin: 15px auto;
-      padding: 12px 24px;
-      background-color: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s;
-    }
+        .penguin-eye.right {
+            right: 12px;
+        }
 
-    #replay-btn:hover {
-      transform: translateY(-2px);
-    }
+        .penguin-pupil {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #2C3E50;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+        }
 
-    @media (max-width: 600px) {
-      #game-container {
-        height: 100vh;
-        max-width: 100%;
-        margin: 0;
-        border-radius: 0;
-      }
+        .penguin-beak {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 12px solid #FFA500;
+            top: 28px;
+            left: 17px;
+        }
 
-      body {
-        padding: 0;
-      }
-    }
-  </style>
+        .penguin-wing {
+            position: absolute;
+            width: 20px;
+            height: 40px;
+            background: var(--penguin-body);
+            border-radius: 50% 50% 50% 0%;
+            bottom: 35px;
+            transition: background 0.3s ease;
+        }
+
+        .penguin-wing.left {
+            left: 8px;
+            transform: rotate(-20deg);
+        }
+
+        .penguin-wing.right {
+            right: 8px;
+            transform: rotate(20deg) scaleX(-1);
+        }
+
+        .penguin-foot {
+            position: absolute;
+            width: 20px;
+            height: 8px;
+            background: #FFA500;
+            border-radius: 50% 50% 0 0;
+            bottom: 10px;
+        }
+
+        .penguin-foot.left {
+            left: 22px;
+        }
+
+        .penguin-foot.right {
+            right: 22px;
+        }
+
+        /* Snowflakes */
+        .snowflake {
+            position: fixed;
+            color: white;
+            font-size: 1em;
+            font-family: Arial;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+            z-index: 0;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0.5;
+            }
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 100px;
+            scroll-behavior: smooth;
+            position: relative;
+            z-index: 2;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.5;
+            transition: all 0.3s ease;
+        }
+
+        .message.user .message-content {
+            background: var(--message-user-bg);
+            color: var(--message-user-text);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: var(--message-bot-bg);
+            color: var(--message-bot-text);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--input-bg);
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.08);
+            border-top: 1px solid var(--footer-border);
+            z-index: 10;
+            transition: background 0.3s ease;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            max-width: 1000px;
+            margin: 0 auto;
+            align-items: center;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid var(--input-border);
+            border-radius: 24px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: var(--input-bg);
+            color: var(--text-color);
+            resize: none;
+            max-height: 120px;
+            min-height: 48px;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        #messageInput:focus {
+            border-color: #a8c7e7;
+            box-shadow: 0 0 0 3px rgba(168, 199, 231, 0.1);
+        }
+
+        #messageInput::placeholder {
+            color: #95a5a6;
+        }
+
+        #sendButton {
+            padding: 14px 28px;
+            background: var(--message-user-bg);
+            color: var(--message-user-text);
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(168, 199, 231, 0.3);
+        }
+
+        #sendButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168, 199, 231, 0.4);
+        }
+
+        #sendButton:active {
+            transform: translateY(0);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 18px;
+            background: #fafbfc;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            max-width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #a8c7e7;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        /* Scrollbar styling */
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #d4e3f0;
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #a8c7e7;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .message-content {
+                max-width: 85%;
+            }
+
+            .input-wrapper {
+                gap: 8px;
+            }
+
+            #sendButton {
+                padding: 14px 20px;
+            }
+
+            .penguin {
+                width: 70px;
+                height: 84px;
+                right: 20px;
+                bottom: 110px;
+                transform: scale(0.7);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chat-container {
+                padding: 12px;
+            }
+
+            .input-container {
+                padding: 12px;
+            }
+
+            #messageInput {
+                font-size: 16px;
+                /* Prevents zoom on iOS */
+            }
+
+            .penguin {
+                right: 10px;
+                bottom: 100px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-  <div id="game-container">
-    <div id="chat-window"></div>
-    <div id="input-area">
-      <input type="text" id="user-input" placeholder="Type your guess or 'hint'..." autocomplete="off">
-      <button id="send-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-      </button>
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode">
+        <span id="themeIcon">🌙</span>
+    </button>
+
+    <!-- Penguin -->
+    <div class="penguin">
+        <div class="penguin-body"></div>
+        <div class="penguin-belly"></div>
+        <div class="penguin-head">
+            <div class="penguin-eye left">
+                <div class="penguin-pupil"></div>
+            </div>
+            <div class="penguin-eye right">
+                <div class="penguin-pupil"></div>
+            </div>
+            <div class="penguin-beak"></div>
+        </div>
+        <div class="penguin-wing left"></div>
+        <div class="penguin-wing right"></div>
+        <div class="penguin-foot left"></div>
+        <div class="penguin-foot right"></div>
     </div>
-    <button id="replay-btn">Play Again</button>
-  </div>
 
-  <script>
-    // --- ADMIN CONFIGURATION ---
-    const ADMIN_COMMAND = "gaynigasex";
+    <div class="chat-container" id="chatContainer">
+        <div class="message bot">
+            <div class="message-content">
+                Welcome! Here are the rules:
+                1. Be respectful.
+                2. No spamming.
+                3. Ask anything!
+            </div>
+        </div>
+    </div>
 
-    const DATA = [
-      { name: "toothbrush", hints: ["You hold it in your hand to maintain something personal.", "It has many small bristles and is usually stored in a cup.", "Used with a specific paste twice a day for a bright smile."] },
-      { name: "bus", hints: ["A large vehicle for many that follows a schedule.", "It stops at marked poles to let people in and out.", "Commonly used for transportation, often bright yellow in school settings."] },
-      { name: "pineapple", hints: ["A prickly tropical fruit with a tough, scaly exterior.", "It wears a green crown but isn't royalty.", "It's yellow inside and a controversial choice for pizza."] },
-      { name: "keyboard", hints: ["An object with many keys that cannot open any locks.", "Used primarily for communicating with a machine or system.", "Standard layouts follow the QWERTY pattern."] },
-      { name: "mosquito", hints: ["A tiny flying nuisance active on warm, quiet nights.", "It 'borrows' a small amount from you without asking.", "Its visits leave behind itchy red circular marks on your skin."] },
-      { name: "ceiling fan", hints: ["Something that stays overhead and spins consistently.", "It uses rotation to move air, though it doesn't change the temperature.", "It has blades but is meant to keep you cool, not for cutting."] },
-      { name: "microwave", hints: ["A kitchen appliance that talks with beeps and hums.", "It uses invisible energy to excite the contents inside.", "It heats things in minutes, but really dislikes metal."] },
-      { name: "umbrella", hints: ["You keep it by the door and use it only when the sky is temperamental.", "It has a skeleton and a waterproof skin to keep you dry.", "Your best friend during a downpour but a burden once you go inside."] },
-      { name: "toaster", hints: ["A small countertop appliance with a spring-loaded surprise.", "Turns soft slices into something brown and crunchy.", "Do not reach inside it with a fork or any metal!"] },
-      { name: "washing machine", hints: ["A laundry room appliance that loves to spin and shake.", "Uses soap and water to refresh your wardrobe.", "Wait until it stops or you'll spill everything!"] }
-    ];
+    <div class="input-container">
+        <div class="input-wrapper">
+            <textarea id="messageInput" placeholder="Click 'Start Game' to begin..." rows="1" disabled></textarea>
+            <button id="sendButton" disabled>Send</button>
+        </div>
+    </div>
 
-    let state = { target: null, guesses: 0, hints: 0, over: false, hintIdx: 0, lastWordIdx: -1 };
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
 
-    const chat = document.getElementById('chat-window');
-    const input = document.getElementById('user-input');
-    const btn = document.getElementById('send-btn');
-    const replay = document.getElementById('replay-btn');
+        // Dynamically detect the API base URL
+        // If the page is opened as a local file, target localhost:80000
+        // If served by the backend, use relative paths
+        const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8000' : '';
 
-    function addM(text, type) {
-      const m = document.createElement('div');
-      m.className = `message ${type}`;
-      m.textContent = text;
-      chat.appendChild(m);
-      chat.scrollTop = chat.scrollHeight;
-    }
+        let isGameStarted = false;
 
-    function addStats(text) {
-      const s = document.createElement('div');
-      s.className = 'game-stats';
-      s.textContent = text;
-      chat.appendChild(s);
-      chat.scrollTop = chat.scrollHeight;
-    }
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
 
-    function start() {
-      chat.innerHTML = '';
-      replay.style.display = 'none';
-      input.disabled = false;
-      btn.disabled = false;
-      input.value = '';
-      input.focus();
+        // Initialize Chat with Start Button
+        function initChat() {
+            // Clear existing content if any (important for restarts)
+            chatContainer.innerHTML = '';
 
-      let idx;
-      do { idx = Math.floor(Math.random() * DATA.length); } while (idx === state.lastWordIdx);
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot';
+            botMessage.innerHTML = `
+                <div class="message-content">
+                    <strong>Welcome to the Word Guessing Game!</strong><br><br>
+                    <strong>Rules:</strong><br>
+                    1. I will give you indirect clues about a secret word.<br>
+                    2. As we progress, the clues get harder (Easy → Medium → Hard).<br>
+                    3. You have 10 clues total to guess the word.<br>
+                    4. Type "hint" to get the next clue.<br><br>
+                    <button id="startGameBtn" style="padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold;">Start Game</button>
+                </div>
+            `;
+            chatContainer.appendChild(botMessage);
 
-      state = { target: DATA[idx], guesses: 0, hints: 0, over: false, hintIdx: 0, lastWordIdx: idx };
+            document.getElementById('startGameBtn').addEventListener('click', startGame);
 
-      addM("I've picked a secret everyday object. Can you guess what it is?", "bot");
-      // First hint is always the "vague description"
-      setTimeout(() => addM(state.target.hints[0], "bot"), 600);
-    }
-
-    function submit() {
-      if (state.over) return;
-      const val = input.value.trim();
-      if (!val) return;
-
-      addM(val, "user");
-      input.value = '';
-
-      // Admin Command handling
-      if (val === ADMIN_COMMAND) {
-        addM(`[ADMIN REVEAL] The secret word is: ${state.target.name}`, "bot");
-        return;
-      }
-
-      const low = val.toLowerCase();
-      const isHint = ["hint", "help", "clue", "idk", "another"].some(h => low.includes(h));
-
-      if (isHint) {
-        state.hints++;
-        state.hintIdx++;
-        if (state.hintIdx < state.target.hints.length) {
-          addM(state.target.hints[state.hintIdx], "bot");
-        } else {
-          addM("I've given you all my clues! You'll have to take a guess.", "bot");
+            // Ensure input is disabled at start or restart
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            messageInput.placeholder = "Click 'Start Game' to begin...";
         }
-      } else {
-        state.guesses++;
-        if (low === state.target.name.toLowerCase()) {
-          finish();
-        } else {
-          addM("Not quite. Keep trying or ask for a hint!", "bot");
+
+        async function startGame() {
+            const btn = document.getElementById('startGameBtn');
+            if (btn) btn.disabled = true;
+
+            showTypingIndicator();
+            try {
+                const response = await fetch(`${API_BASE}/start`, { method: 'POST' });
+                const data = await response.json();
+                removeTypingIndicator();
+                addMessage(data.text, 'bot');
+                isGameStarted = true;
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.placeholder = "Enter your guess or type 'hint'...";
+                messageInput.focus();
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage("Failed to start game. Is the server running? Run './run.sh' and access via http://localhost:8000", 'bot');
+            }
         }
-      }
-    }
 
-    function finish() {
-      state.over = true;
-      input.disabled = true;
-      btn.disabled = true;
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
 
-      setTimeout(() => {
-        addM(`Correct! It was a "${state.target.name}".`, "bot");
-        addStats(`Results: ${state.guesses} guesses | ${state.hints} hints used`);
-        replay.style.display = 'block';
-      }, 600);
-    }
+            addMessage(message, 'user');
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
 
-    // --- Event Listeners (Defined once to avoid duplicates) ---
-    btn.onclick = submit;
-    input.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
-    replay.onclick = start;
+            if (!isGameStarted) {
+                addMessage("Please click 'Start Game' first!", "bot");
+                return;
+            }
 
-    // Initialize first game
-    start();
-  </script>
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            showTypingIndicator();
+
+            try {
+                if (message.toLowerCase() === 'hint') {
+                    const response = await fetch(`${API_BASE}/next`, { method: 'POST' });
+                    const data = await response.json();
+                    removeTypingIndicator();
+                    if (data.finished || data.message === "No more hints") {
+                        addMessage("No more hints available! Game Over.", 'bot');
+                        isGameStarted = false;
+                        messageInput.disabled = true;
+                        sendButton.disabled = true;
+                        showRestartButton();
+                    } else if (data.error) {
+                        addMessage("Error: " + data.error, "bot");
+                    } else {
+                        addMessage(`[Clue ${data.question} - ${data.difficulty.toUpperCase()}] ${data.text}`, 'bot');
+                    }
+                } else {
+                    const response = await fetch(`${API_BASE}/guess`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ guess: message }),
+                    });
+                    const data = await response.json();
+                    removeTypingIndicator();
+                    addMessage(data.message, 'bot');
+                    if (data.correct) {
+                        isGameStarted = false;
+                        messageInput.disabled = true;
+                        sendButton.disabled = true;
+                        addMessage("Congratulations! You won!", "bot");
+                        showRestartButton();
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                removeTypingIndicator();
+                addMessage('Error communicating with backend.', 'bot');
+            } finally {
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        function showRestartButton() {
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot';
+            botMessage.innerHTML = `
+                <div class="message-content">
+                    <button id="restartGameBtn" style="padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold;">Play Again</button>
+                </div>
+            `;
+            chatContainer.appendChild(botMessage);
+            document.getElementById('restartGameBtn').addEventListener('click', startGame);
+        }
+
+        let currentTypingIndicator = null;
+        function showTypingIndicator() {
+            currentTypingIndicator = document.createElement('div');
+            currentTypingIndicator.className = 'message bot';
+            currentTypingIndicator.innerHTML = `
+                <div class="typing-indicator active">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            chatContainer.appendChild(currentTypingIndicator);
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            if (currentTypingIndicator) {
+                currentTypingIndicator.remove();
+                currentTypingIndicator = null;
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        initChat();
+
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeIcon.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeIcon.textContent = '☀️';
+        }
+
+        function createSnowflakes() {
+            const snowflakeCount = 15;
+            for (let i = 0; i < snowflakeCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                snowflake.textContent = '❄';
+                snowflake.style.left = Math.random() * 100 + '%';
+                snowflake.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                snowflake.style.animationDelay = Math.random() * 5 + 's';
+                snowflake.style.fontSize = (Math.random() * 0.5 + 0.5) + 'em';
+                snowflake.style.opacity = Math.random() * 0.6 + 0.4;
+                document.body.appendChild(snowflake);
+            }
+        }
+        createSnowflakes();
+    </script>
 </body>
 
 </html>

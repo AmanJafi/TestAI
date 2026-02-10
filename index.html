@@ -597,33 +597,33 @@
       sendButton.disabled = true;
       messageInput.placeholder = "Click 'Start Game' to begin...";
     }
+    async function startGame(sessionReset = false) {
+      // Clear chat for every level to keep it clean
+      chatContainer.innerHTML = '';
 
-    // Clear chat for every level to keep it clean
-    chatContainer.innerHTML = '';
+      showTypingIndicator();
+      try {
+        const response = await fetch(`${API_BASE}/start?session_reset=${sessionReset === true}`, { method: 'POST' });
+        const data = await response.json();
+        removeTypingIndicator();
 
-    showTypingIndicator();
-    try {
-      const response = await fetch(`${API_BASE}/start?session_reset=${sessionReset === true}`, { method: 'POST' });
-      const data = await response.json();
-      removeTypingIndicator();
+        // Add a small divider or level announcement
+        if (!sessionReset) {
+          addMessage(`--- Entering Level ${data.level} (${data.difficulty.toUpperCase()}) ---`, 'bot');
+        } else {
+          addMessage(`--- Starting New Game Session ---`, 'bot');
+        }
 
-      // Add a small divider or level announcement
-      if (!sessionReset) {
-        addMessage(`--- Entering Level ${data.level} (${data.difficulty.toUpperCase()}) ---`, 'bot');
-      } else {
-        addMessage(`--- Starting New Game Session ---`, 'bot');
+        addMessage(data.text, 'bot');
+        isGameStarted = true;
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        messageInput.placeholder = "Enter your guess or type 'hint'...";
+        messageInput.focus();
+      } catch (error) {
+        removeTypingIndicator();
+        addMessage("Failed to start game. Is the server running? Run './run.sh' and access via http://localhost:8000", 'bot');
       }
-
-      addMessage(data.text, 'bot');
-      isGameStarted = true;
-      messageInput.disabled = false;
-      sendButton.disabled = false;
-      messageInput.placeholder = "Enter your guess or type 'hint'...";
-      messageInput.focus();
-    } catch (error) {
-      removeTypingIndicator();
-      addMessage("Failed to start game. Is the server running? Run './run.sh' and access via http://localhost:8000", 'bot');
-    }
     }
 
     async function sendMessage() {
@@ -758,6 +758,8 @@
           </table>
           <br>
           <strong>Total Session Score: ${totalScore}</strong><br><br>
+      \`;
+
       const btn = document.createElement('button');
       btn.textContent = 'Play New Session';
       btn.style.cssText = 'padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px;';
@@ -780,13 +782,13 @@
     function showTypingIndicator() {
       currentTypingIndicator = document.createElement('div');
       currentTypingIndicator.className = 'message bot';
-      currentTypingIndicator.innerHTML = `
-        < div class="typing-indicator active" >
+      currentTypingIndicator.innerHTML = \`
+                <div class="typing-indicator active">
                     <span></span>
                     <span></span>
                     <span></span>
-                </div >
-        `;
+                </div>
+            \`;
       chatContainer.appendChild(currentTypingIndicator);
       scrollToBottom();
     }

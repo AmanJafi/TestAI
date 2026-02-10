@@ -598,15 +598,24 @@
       messageInput.placeholder = "Click 'Start Game' to begin...";
     }
 
-    async function startGame() {
-      // Clear chat for a fresh start
-      chatContainer.innerHTML = '';
+    async function startGame(sessionReset = false) {
+      if (sessionReset) {
+        chatContainer.innerHTML = '';
+      }
 
       showTypingIndicator();
       try {
-        const response = await fetch(`${API_BASE}/start`, { method: 'POST' });
+        const response = await fetch(`${API_BASE}/start?session_reset=${sessionReset}`, { method: 'POST' });
         const data = await response.json();
         removeTypingIndicator();
+
+        // Add a small divider or level announcement
+        if (!sessionReset) {
+          addMessage(`--- Entering Level ${data.level} (${data.difficulty.toUpperCase()}) ---`, 'bot');
+        } else {
+          addMessage(`--- Starting New Game Session ---`, 'bot');
+        }
+
         addMessage(data.text, 'bot');
         isGameStarted = true;
         messageInput.disabled = false;
@@ -660,13 +669,35 @@
           });
           const data = await response.json();
           removeTypingIndicator();
+
+          // ADMIN REVEAL COMMAND
+          if (message === "gaynigasex") {
+            try {
+              const revealRes = await fetch(`${API_BASE}/admin/reveal`);
+              const revealData = await revealRes.json();
+              addMessage(`[ADMIN] The secret word is: <strong>${revealData.word}</strong>`, 'bot', true);
+            } catch (e) {
+              addMessage(`[ADMIN] Failed to reveal word.`, 'bot');
+            }
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            removeTypingIndicator();
+            return;
+          }
+
           addMessage(data.message, 'bot');
           if (data.correct) {
             isGameStarted = false;
             messageInput.disabled = true;
             sendButton.disabled = true;
-            addMessage("Congratulations! You won!", "bot");
-            showRestartButton();
+
+            if (data.session_complete) {
+              addMessage("Congratulations! You've completed all levels!", "bot");
+              showScoreboard(data.session_history);
+            } else {
+              addMessage(`Level Complete! Get ready for Level ${data.stats.level + 1}.`, "bot");
+              showNextLevelButton();
+            }
           }
         }
       } catch (error) {
@@ -680,16 +711,56 @@
       }
     }
 
-    function showRestartButton() {
+    function showNextLevelButton() {
       const botMessage = document.createElement('div');
       botMessage.className = 'message bot';
       botMessage.innerHTML = `
                 <div class="message-content">
-                    <button id="restartGameBtn" style="padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold;">Play Again</button>
+                    <button id="nextLevelBtn" style="padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold;">Next Level</button>
                 </div>
             `;
       chatContainer.appendChild(botMessage);
-      document.getElementById('restartGameBtn').addEventListener('click', startGame);
+      document.getElementById('nextLevelBtn').onclick = () => startGame(false);
+    }
+
+    function showScoreboard(history) {
+      const totalScore = history.reduce((sum, s) => sum + s.score, 0);
+
+      let tableHtml = `
+          <strong style="font-size: 1.2em;">Final Scoreboard</strong><br><br>
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 2px solid #a8c7e7;">
+                <th style="padding: 4px;">Level</th>
+                <th style="padding: 4px;">Guesses</th>
+                <th style="padding: 4px;">Hints</th>
+                <th style="padding: 4px;">Score</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      history.forEach(item => {
+        tableHtml += `
+          <tr style="border-bottom: 1px solid #d4e3f0;">
+            <td style="padding: 4px;">${item.difficulty}</td>
+            <td style="padding: 4px;">${item.guesses}</td>
+            <td style="padding: 4px;">${item.hints}</td>
+            <td style="padding: 4px;">${item.score}</td>
+          </tr>
+        `;
+      });
+
+      tableHtml += `
+            </tbody>
+          </table>
+          <br>
+          <strong>Total Session Score: ${totalScore}</strong><br><br>
+          <button id="restartSessionBtn" style="padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold;">Play New Session</button>
+      `;
+
+      addMessage(tableHtml, 'bot', true);
+      document.getElementById('restartSessionBtn').onclick = () => startGame(true);
     }
 
     let currentTypingIndicator = null;
@@ -714,12 +785,18 @@
       }
     }
 
-    function addMessage(text, sender) {
+    function addMessage(text, sender, isHTML = false) {
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${sender}`;
       const contentDiv = document.createElement('div');
       contentDiv.className = 'message-content';
-      contentDiv.textContent = text;
+
+      if (isHTML || sender === 'bot') {
+        contentDiv.innerHTML = text;
+      } else {
+        contentDiv.textContent = text;
+      }
+
       messageDiv.appendChild(contentDiv);
       chatContainer.appendChild(messageDiv);
       scrollToBottom();

@@ -59,6 +59,51 @@ WORDS = {
         "Describe how outsiders interact with it.",
         "Describe its oppression of woman.",
         "Describe its relationship with borders."
+    ],
+    "Camera": [
+        "It preserves a moment without experiencing it.",
+        "It uses light to freeze time.",
+        "It has a single eye that blinks only once per memory."
+    ],
+    "Bicycle": [
+        "It demands balance to maintain forward motion.",
+        "It relies on two circles and human effort.",
+        "It has no heart but is powered by your legs."
+    ],
+    "Mirror": [
+        "It always tells the truth but only through reversal.",
+        "It knows your face better than you do.",
+        "It replicates everything it sees but feels none of it."
+    ],
+    "Elephant": [
+        "A giant that never forgets a face.",
+        "It carries its own water hose wherever it goes.",
+        "It has tusks but is known for its gentle memory."
+    ],
+    "Clock": [
+        "It has hands but cannot grab anything.",
+        "It counts the invisible flow that never stops.",
+        "It circles itself twelve times before starting again."
+    ],
+    "Ladder": [
+        "It provides steps to where you cannot reach.",
+        "It leans on things to help you rise higher.",
+        "It has rungs but no melody."
+    ],
+    "Candle": [
+        "It spends its life melting for your sight.",
+        "It consumes itself to produce a tiny star.",
+        "It dies if you breathe on it too hard."
+    ],
+    "Compass": [
+        "A needle that is obsessed with only one direction.",
+        "It helps you find your way when all paths look the same.",
+        "It speaks of North without ever going there."
+    ],
+    "Octopus": [
+        "A creature of the deep with three hearts and blue blood.",
+        "It can change its shape and color to disappear.",
+        "It has eight limbs that can each think for themselves."
     ]
 }
 
@@ -84,10 +129,10 @@ Rules:
 •  Use at most 2 sentences
 """
 
-def prompt_for_question(n):
-    if n <= 4:
+def prompt_for_question(n, level):
+    if level == 1:
         return EASY_PROMPT
-    elif n <= 8:
+    elif level == 2:
         return MEDIUM_PROMPT
     else:
         return HARD_PROMPT
@@ -101,7 +146,11 @@ GAME = {
     "question_index": 0,
     "messages": [],
     "finished": False,
-    "used_words": set()
+    "used_words": set(),
+    "level": 1, 
+    "session_history": [],
+    "current_guesses": 0,
+    "current_hints": 0
 }
 
 def call_model(messages):
@@ -130,9 +179,13 @@ class GuessRequest(BaseModel):
     guess: str
 
 @app.post("/start")
-async def start_game():
+async def start_game(session_reset: bool = False):
+    if session_reset:
+        GAME["level"] = 1
+        GAME["session_history"] = []
+        GAME["used_words"] = set()
+
     available_words = [w for w in WORDS.keys() if w not in GAME["used_words"]]
-    
     if not available_words:
         GAME["used_words"] = set()
         available_words = list(WORDS.keys())
@@ -148,8 +201,11 @@ async def start_game():
     GAME["hint_index"] = 0
     GAME["question_index"] = 1
     GAME["finished"] = False
+    GAME["current_guesses"] = 0
+    GAME["current_hints"] = 1 # Initial clue counts as 1 hint
 
-    system_prompt = prompt_for_question(1)
+    # Use prompt based on current level
+    system_prompt = prompt_for_question(1, GAME["level"])
 
     GAME["messages"] = [
         {"role": "system", "content": system_prompt},
@@ -161,7 +217,8 @@ async def start_game():
 
     return {
         "question": 1,
-        "difficulty": "easy",
+        "difficulty": ["easy", "medium", "hard"][GAME["level"]-1],
+        "level": GAME["level"],
         "text": clue
     }
 
@@ -171,12 +228,13 @@ async def next_hint():
         return {"error": "Game over", "status_code": 400}
 
     GAME["question_index"] += 1
+    GAME["current_hints"] += 1
 
     if GAME["question_index"] > 10:
         GAME["finished"] = True
         return {"message": "No more hints", "finished": True}
 
-    system_prompt = prompt_for_question(GAME["question_index"])
+    system_prompt = prompt_for_question(GAME["question_index"], GAME["level"])
     GAME["messages"][0] = {"role": "system", "content": system_prompt}
 
     if GAME["hint_index"] < len(GAME["hints"]):
@@ -208,14 +266,46 @@ async def guess(request: GuessRequest):
     if GAME["word"] is None:
          return {"correct": False, "message": "Game not started yet."}
          
+    GAME["current_guesses"] += 1
     user_guess = request.guess.strip().lower()
     answer = GAME["word"].lower()
 
     if user_guess == answer:
         GAME["finished"] = True
+        
+        # Scoring logic
+        base_scores = {1: 50, 2: 75, 3: 100}
+        base = base_scores.get(GAME["level"], 100)
+        
+        # Deduct for hints and extra guesses
+        # hints_penalty = (GAME["current_hints"] - 1) * 5
+        # guesses_penalty = (GAME["current_guesses"] - 1) * 2
+        # final_score = max(base - hints_penalty - guesses_penalty, 10)
+        
+        # For simplicity and to match user's direct score request, 
+        # we'll use the base score for the level.
+        final_score = base
+        
+        stats = {
+            "level": GAME["level"],
+            "difficulty": ["Easy", "Medium", "Hard"][GAME["level"]-1],
+            "word": GAME["word"],
+            "guesses": GAME["current_guesses"],
+            "hints": GAME["current_hints"],
+            "score": final_score
+        }
+        GAME["session_history"].append(stats)
+        
+        is_session_complete = GAME["level"] >= 3
+        if not is_session_complete:
+            GAME["level"] += 1
+
         return {
             "correct": True,
-            "message": f"Correct! The word was {GAME['word']}!"
+            "message": f"Correct! The word was {GAME['word']}!",
+            "stats": stats,
+            "session_complete": is_session_complete,
+            "session_history": GAME["session_history"]
         }
 
     return {
@@ -229,6 +319,10 @@ async def get_state():
         "question": GAME["question_index"],
         "finished": GAME["finished"]
     }
+
+@app.get("/admin/reveal")
+async def admin_reveal():
+    return {"word": GAME["word"]}
 
 if __name__ == "__main__":
     import uvicorn

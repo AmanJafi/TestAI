@@ -599,10 +599,8 @@
     }
 
     async function startGame() {
-      const startBtn = document.getElementById('startGameBtn');
-      const restartBtn = document.getElementById('restartGameBtn');
-      if (startBtn) startBtn.disabled = true;
-      if (restartBtn) restartBtn.disabled = true;
+      // Clear chat for a fresh start
+      chatContainer.innerHTML = '';
 
       showTypingIndicator();
       try {

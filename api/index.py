@@ -277,14 +277,18 @@ async def guess(request: GuessRequest):
         base_scores = {1: 50, 2: 75, 3: 100}
         base = base_scores.get(GAME["level"], 100)
         
-        # Deduct for hints and extra guesses
-        # hints_penalty = (GAME["current_hints"] - 1) * 5
-        # guesses_penalty = (GAME["current_guesses"] - 1) * 2
-        # final_score = max(base - hints_penalty - guesses_penalty, 10)
+        # Penalties: 5 pts per hint, 1 pt per guess.
+        # However, the user said "each hint ig like 5 points and each guess is 1 points".
+        # We'll assume the first hint (the initial clue) is free or counted. 
+        # Let's count all hints and guesses as requested.
+        hints_penalty = (GAME["current_hints"]) * 5
+        guesses_penalty = (GAME["current_guesses"]) * 1
         
-        # For simplicity and to match user's direct score request, 
-        # we'll use the base score for the level.
-        final_score = base
+        # To avoid negative scores, we'll clamp at a minimum score of 10.
+        # But wait, if they get it on first try, we should give a good score.
+        # Let's adjust: (base - (hints-1)*5 - (guesses-1)*1) 
+        # so getting it on 1st hint/1st guess gets the full base.
+        final_score = max(base - (GAME["current_hints"] - 1) * 5 - (GAME["current_guesses"] - 1) * 1, 10)
         
         stats = {
             "level": GAME["level"],

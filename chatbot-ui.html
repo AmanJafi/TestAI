@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #B0D8E8 40%, #E8F4F8 70%, #FFFFFF 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background:
+                linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.9) 20%),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.1) 2px,
+                    rgba(255, 255, 255, 0.1) 4px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Snow peaks in background */
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: 100px;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background:
+                linear-gradient(120deg, transparent 0%, transparent 10%, #E8F4F8 10%, #FFFFFF 15%, transparent 15%, transparent 25%, #E8F4F8 25%, #FFFFFF 32%, transparent 32%, transparent 45%, #E8F4F8 45%, #FFFFFF 50%, transparent 50%, transparent 60%, #E8F4F8 60%, #FFFFFF 68%, transparent 68%, transparent 75%, #E8F4F8 75%, #FFFFFF 82%, transparent 82%);
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Penguin illustration */
+        .penguin {
+            position: fixed;
+            bottom: 120px;
+            right: 40px;
+            width: 100px;
+            height: 120px;
+            z-index: 1;
+            animation: waddle 3s ease-in-out infinite;
+        }
+
+        @keyframes waddle {
+
+            0%,
+            100% {
+                transform: rotate(-2deg);
+            }
+
+            50% {
+                transform: rotate(2deg);
+            }
+        }
+
+        .penguin-body {
+            position: absolute;
+            width: 60px;
+            height: 70px;
+            background: #2C3E50;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .penguin-belly {
+            position: absolute;
+            width: 40px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            bottom: 25px;
+            left: 30px;
+        }
+
+        .penguin-head {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: #2C3E50;
+            border-radius: 50%;
+            bottom: 70px;
+            left: 25px;
+        }
+
+        .penguin-eye {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            top: 18px;
+        }
+
+        .penguin-eye.left {
+            left: 12px;
+        }
+
+        .penguin-eye.right {
+            right: 12px;
+        }
+
+        .penguin-pupil {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #2C3E50;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+        }
+
+        .penguin-beak {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 12px solid #FFA500;
+            top: 28px;
+            left: 17px;
+        }
+
+        .penguin-wing {
+            position: absolute;
+            width: 20px;
+            height: 40px;
+            background: #2C3E50;
+            border-radius: 50% 50% 50% 0%;
+            bottom: 35px;
+        }
+
+        .penguin-wing.left {
+            left: 8px;
+            transform: rotate(-20deg);
+        }
+
+        .penguin-wing.right {
+            right: 8px;
+            transform: rotate(20deg) scaleX(-1);
+        }
+
+        .penguin-foot {
+            position: absolute;
+            width: 20px;
+            height: 8px;
+            background: #FFA500;
+            border-radius: 50% 50% 0 0;
+            bottom: 10px;
+        }
+
+        .penguin-foot.left {
+            left: 22px;
+        }
+
+        .penguin-foot.right {
+            right: 22px;
+        }
+
+        /* Snowflakes */
+        .snowflake {
+            position: fixed;
+            color: white;
+            font-size: 1em;
+            font-family: Arial;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+            z-index: 0;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0.5;
+            }
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 100px;
+            scroll-behavior: smooth;
+            position: relative;
+            z-index: 2;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #a8c7e7 0%, #8fb4d9 100%);
+            color: #1a1a1a;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: #fafbfc;
+            color: #2c3e50;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.08);
+            border-top: 1px solid rgba(168, 199, 231, 0.3);
+            z-index: 10;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            max-width: 1000px;
+            margin: 0 auto;
+            align-items: center;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #d4e3f0;
+            border-radius: 24px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+            color: #2c3e50;
+            resize: none;
+            max-height: 120px;
+            min-height: 48px;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        #messageInput:focus {
+            border-color: #a8c7e7;
+            box-shadow: 0 0 0 3px rgba(168, 199, 231, 0.1);
+        }
+
+        #messageInput::placeholder {
+            color: #95a5a6;
+        }
+
+        #sendButton {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #a8c7e7 0%, #8fb4d9 100%);
+            color: #1a1a1a;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(168, 199, 231, 0.3);
+        }
+
+        #sendButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168, 199, 231, 0.4);
+        }
+
+        #sendButton:active {
+            transform: translateY(0);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 18px;
+            background: #fafbfc;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            max-width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #a8c7e7;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        /* Scrollbar styling */
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #d4e3f0;
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #a8c7e7;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .message-content {
+                max-width: 85%;
+            }
+
+            .input-wrapper {
+                gap: 8px;
+            }
+
+            #sendButton {
+                padding: 14px 20px;
+            }
+
+            .penguin {
+                width: 70px;
+                height: 84px;
+                right: 20px;
+                bottom: 110px;
+                transform: scale(0.7);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chat-container {
+                padding: 12px;
+            }
+
+            .input-container {
+                padding: 12px;
+            }
+
+            #messageInput {
+                font-size: 16px;
+                /* Prevents zoom on iOS */
+            }
+
+            .penguin {
+                right: 10px;
+                bottom: 100px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Penguin -->
+    <div class="penguin">
+        <div class="penguin-body"></div>
+        <div class="penguin-belly"></div>
+        <div class="penguin-head">
+            <div class="penguin-eye left">
+                <div class="penguin-pupil"></div>
+            </div>
+            <div class="penguin-eye right">
+                <div class="penguin-pupil"></div>
+            </div>
+            <div class="penguin-beak"></div>
+        </div>
+        <div class="penguin-wing left"></div>
+        <div class="penguin-wing right"></div>
+        <div class="penguin-foot left"></div>
+        <div class="penguin-foot right"></div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="message bot">
+            <div class="message-content">
+                Welcome! Here are the rules:
+                1. Be respectful.
+                2. No spamming.
+                3. Ask anything!
+            </div>
+        </div>
+    </div>
+
+    <div class="input-container">
+        <div class="input-wrapper">
+            <textarea id="messageInput" placeholder="Type your message..." rows="1"></textarea>
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+
+        let isGameStarted = false;
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Initialize Chat with Start Button
+        function initChat() {
+            // Clear existing content if any (important for restarts)
+            chatContainer.innerHTML = '';
+
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot';
+            botMessage.innerHTML = `
+                <div class="message-content">
+                    <strong>Welcome to the Word Guessing Game!</strong><br><br>
+                    <strong>Rules:</strong><br>
+                    1. I will give you indirect clues about a secret word.<br>
+                    2. As we progress, the clues get harder (Easy → Medium → Hard).<br>
+                    3. You have 10 clues total to guess the word.<br>
+                    4. Type "hint" to get the next clue.<br><br>
+                    <button id="startGameBtn" style="padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold;">Start Game</button>
+                </div>
+            `;
+            chatContainer.appendChild(botMessage);
+
+            document.getElementById('startGameBtn').addEventListener('click', startGame);
+        }
+
+        async function startGame() {
+            const btn = document.getElementById('startGameBtn');
+            if (btn) btn.disabled = true;
+
+            showTypingIndicator();
+            try {
+                const response = await fetch('http://localhost:8000/start', { method: 'POST' });
+                const data = await response.json();
+                removeTypingIndicator();
+                addMessage(data.text, 'bot');
+                isGameStarted = true;
+                messageInput.placeholder = "Enter your guess or type 'hint'...";
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage("Failed to start game. Is the server running?", 'bot');
+            }
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+
+            if (!isGameStarted) {
+                addMessage("Please click 'Start Game' first!", "bot");
+                return;
+            }
+
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            showTypingIndicator();
+
+            try {
+                if (message.toLowerCase() === 'hint') {
+                    const response = await fetch('http://localhost:8000/next', { method: 'POST' });
+                    const data = await response.json();
+                    removeTypingIndicator();
+                    if (data.finished || data.message === "No more hints") {
+                        addMessage("No more hints available! Game Over.", 'bot');
+                        isGameStarted = false;
+                        showRestartButton();
+                    } else if (data.error) {
+                        addMessage("Error: " + data.error, "bot");
+                    } else {
+                        addMessage(`[Clue ${data.question} - ${data.difficulty.toUpperCase()}] ${data.text}`, 'bot');
+                    }
+                } else {
+                    const response = await fetch('http://localhost:8000/guess', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ guess: message }),
+                    });
+                    const data = await response.json();
+                    removeTypingIndicator();
+                    addMessage(data.message, 'bot');
+                    if (data.correct) {
+                        isGameStarted = false;
+                        addMessage("Congratulations! You won!", "bot");
+                        showRestartButton();
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                removeTypingIndicator();
+                addMessage('Error communicating with backend.', 'bot');
+            } finally {
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        function showRestartButton() {
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot';
+            botMessage.innerHTML = `
+                <div class="message-content">
+                    <button id="restartGameBtn" style="padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold;">Play Again</button>
+                </div>
+            `;
+            chatContainer.appendChild(botMessage);
+            document.getElementById('restartGameBtn').addEventListener('click', startGame);
+        }
+
+        let currentTypingIndicator = null;
+        function showTypingIndicator() {
+            currentTypingIndicator = document.createElement('div');
+            currentTypingIndicator.className = 'message bot';
+            currentTypingIndicator.innerHTML = `
+                <div class="typing-indicator active">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            chatContainer.appendChild(currentTypingIndicator);
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            if (currentTypingIndicator) {
+                currentTypingIndicator.remove();
+                currentTypingIndicator = null;
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        initChat();
+
+        function createSnowflakes() {
+            const snowflakeCount = 15;
+            for (let i = 0; i < snowflakeCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                snowflake.textContent = '❄';
+                snowflake.style.left = Math.random() * 100 + '%';
+                snowflake.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                snowflake.style.animationDelay = Math.random() * 5 + 's';
+                snowflake.style.fontSize = (Math.random() * 0.5 + 0.5) + 'em';
+                snowflake.style.opacity = Math.random() * 0.6 + 0.4;
+                document.body.appendChild(snowflake);
+            }
+        }
+        createSnowflakes();
+    </script>
+</body>
+
+</html>

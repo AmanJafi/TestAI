@@ -590,7 +590,7 @@
             `;
       chatContainer.appendChild(botMessage);
 
-      document.getElementById('startGameBtn').addEventListener('click', startGame);
+      document.getElementById('startGameBtn').onclick = () => startGame(true);
 
       // Ensure input is disabled at start or restart
       messageInput.disabled = true;
@@ -599,13 +599,16 @@
     }
 
     async function startGame(sessionReset = false) {
-      if (sessionReset) {
+      // Ensure we have a boolean
+      const shouldReset = sessionReset === true;
+
+      if (shouldReset) {
         chatContainer.innerHTML = '';
       }
 
       showTypingIndicator();
       try {
-        const response = await fetch(`${API_BASE}/start?session_reset=${sessionReset}`, { method: 'POST' });
+        const response = await fetch(`${API_BASE}/start?session_reset=${shouldReset}`, { method: 'POST' });
         const data = await response.json();
         removeTypingIndicator();
 

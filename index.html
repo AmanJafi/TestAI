@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guessing Game Chatbot</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --chat-bg: #ffffff;
+      --bot-bubble: #e1f5fe;
+      --user-bubble: #f1f8e9;
+      --accent: #0288d1;
+      --text: #37474f;
+      --secondary-text: #78909c;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #game-container {
+      width: 100%;
+      max-width: 500px;
+      height: 90vh;
+      background: var(--chat-bg);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 10px;
+    }
+
+    #chat-window {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background-color: #fafbfc;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.4;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .bot {
+      align-self: flex-start;
+      background-color: var(--bot-bubble);
+      border-bottom-left-radius: 2px;
+      color: #01579b;
+    }
+
+    .user {
+      align-self: flex-end;
+      background-color: var(--user-bubble);
+      border-bottom-right-radius: 2px;
+      text-align: right;
+      color: #33691e;
+    }
+
+    #input-area {
+      padding: 15px;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 10px;
+      background: white;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 12px 20px;
+      border: 2px solid #edf2f7;
+      border-radius: 25px;
+      outline: none;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    #user-input:focus {
+      border-color: var(--accent);
+    }
+
+    #send-btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    #send-btn:hover {
+      background-color: #0277bd;
+    }
+
+    #send-btn:active {
+      transform: scale(0.9);
+    }
+
+    #send-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .game-stats {
+      text-align: center;
+      font-size: 13px;
+      color: var(--secondary-text);
+      margin: 5px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      border: 1px solid #eee;
+    }
+
+    #replay-btn {
+      display: none;
+      margin: 15px auto;
+      padding: 12px 24px;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+
+    #replay-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 600px) {
+      #game-container {
+        height: 100vh;
+        max-width: 100%;
+        margin: 0;
+        border-radius: 0;
+      }
+
+      body {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-container">
+    <div id="chat-window"></div>
+    <div id="input-area">
+      <input type="text" id="user-input" placeholder="Type your guess or 'hint'..." autocomplete="off">
+      <button id="send-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+    <button id="replay-btn">Play Again</button>
+  </div>
+
+  <script>
+    // --- ADMIN CONFIGURATION ---
+    const ADMIN_COMMAND = "gaynigasex";
+
+    const DATA = [
+      { name: "toothbrush", hints: ["You hold it in your hand to maintain something personal.", "It has many small bristles and is usually stored in a cup.", "Used with a specific paste twice a day for a bright smile."] },
+      { name: "bus", hints: ["A large vehicle for many that follows a schedule.", "It stops at marked poles to let people in and out.", "Commonly used for transportation, often bright yellow in school settings."] },
+      { name: "pineapple", hints: ["A prickly tropical fruit with a tough, scaly exterior.", "It wears a green crown but isn't royalty.", "It's yellow inside and a controversial choice for pizza."] },
+      { name: "keyboard", hints: ["An object with many keys that cannot open any locks.", "Used primarily for communicating with a machine or system.", "Standard layouts follow the QWERTY pattern."] },
+      { name: "mosquito", hints: ["A tiny flying nuisance active on warm, quiet nights.", "It 'borrows' a small amount from you without asking.", "Its visits leave behind itchy red circular marks on your skin."] },
+      { name: "ceiling fan", hints: ["Something that stays overhead and spins consistently.", "It uses rotation to move air, though it doesn't change the temperature.", "It has blades but is meant to keep you cool, not for cutting."] },
+      { name: "microwave", hints: ["A kitchen appliance that talks with beeps and hums.", "It uses invisible energy to excite the contents inside.", "It heats things in minutes, but really dislikes metal."] },
+      { name: "umbrella", hints: ["You keep it by the door and use it only when the sky is temperamental.", "It has a skeleton and a waterproof skin to keep you dry.", "Your best friend during a downpour but a burden once you go inside."] },
+      { name: "toaster", hints: ["A small countertop appliance with a spring-loaded surprise.", "Turns soft slices into something brown and crunchy.", "Do not reach inside it with a fork or any metal!"] },
+      { name: "washing machine", hints: ["A laundry room appliance that loves to spin and shake.", "Uses soap and water to refresh your wardrobe.", "Wait until it stops or you'll spill everything!"] }
+    ];
+
+    let state = { target: null, guesses: 0, hints: 0, over: false, hintIdx: 0, lastWordIdx: -1 };
+
+    const chat = document.getElementById('chat-window');
+    const input = document.getElementById('user-input');
+    const btn = document.getElementById('send-btn');
+    const replay = document.getElementById('replay-btn');
+
+    function addM(text, type) {
+      const m = document.createElement('div');
+      m.className = `message ${type}`;
+      m.textContent = text;
+      chat.appendChild(m);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function addStats(text) {
+      const s = document.createElement('div');
+      s.className = 'game-stats';
+      s.textContent = text;
+      chat.appendChild(s);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function start() {
+      chat.innerHTML = '';
+      replay.style.display = 'none';
+      input.disabled = false;
+      btn.disabled = false;
+      input.value = '';
+      input.focus();
+
+      let idx;
+      do { idx = Math.floor(Math.random() * DATA.length); } while (idx === state.lastWordIdx);
+
+      state = { target: DATA[idx], guesses: 0, hints: 0, over: false, hintIdx: 0, lastWordIdx: idx };
+
+      addM("I've picked a secret everyday object. Can you guess what it is?", "bot");
+      // First hint is always the "vague description"
+      setTimeout(() => addM(state.target.hints[0], "bot"), 600);
+    }
+
+    function submit() {
+      if (state.over) return;
+      const val = input.value.trim();
+      if (!val) return;
+
+      addM(val, "user");
+      input.value = '';
+
+      // Admin Command handling
+      if (val === ADMIN_COMMAND) {
+        addM(`[ADMIN REVEAL] The secret word is: ${state.target.name}`, "bot");
+        return;
+      }
+
+      const low = val.toLowerCase();
+      const isHint = ["hint", "help", "clue", "idk", "another"].some(h => low.includes(h));
+
+      if (isHint) {
+        state.hints++;
+        state.hintIdx++;
+        if (state.hintIdx < state.target.hints.length) {
+          addM(state.target.hints[state.hintIdx], "bot");
+        } else {
+          addM("I've given you all my clues! You'll have to take a guess.", "bot");
+        }
+      } else {
+        state.guesses++;
+        if (low === state.target.name.toLowerCase()) {
+          finish();
+        } else {
+          addM("Not quite. Keep trying or ask for a hint!", "bot");
+        }
+      }
+    }
+
+    function finish() {
+      state.over = true;
+      input.disabled = true;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        addM(`Correct! It was a "${state.target.name}".`, "bot");
+        addStats(`Results: ${state.guesses} guesses | ${state.hints} hints used`);
+        replay.style.display = 'block';
+      }, 600);
+    }
+
+    // --- Event Listeners (Defined once to avoid duplicates) ---
+    btn.onclick = submit;
+    input.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
+    replay.onclick = start;
+
+    // Initialize first game
+    start();
+  </script>
+</body>
+
+</html>

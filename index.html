@@ -782,13 +782,13 @@
     function showTypingIndicator() {
       currentTypingIndicator = document.createElement('div');
       currentTypingIndicator.className = 'message bot';
-      currentTypingIndicator.innerHTML = \`
-                <div class="typing-indicator active">
+      currentTypingIndicator.innerHTML = `
+        < div class="typing-indicator active" >
                     <span></span>
                     <span></span>
                     <span></span>
-                </div>
-            \`;
+                </div >
+        `;
       chatContainer.appendChild(currentTypingIndicator);
       scrollToBottom();
     }

@@ -758,19 +758,19 @@
           </table>
           <br>
           <strong>Total Session Score: ${totalScore}</strong><br><br>
-      \`;
+      `;
 
       const btn = document.createElement('button');
       btn.textContent = 'Play New Session';
       btn.style.cssText = 'padding: 8px 16px; background: #8fb4d9; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px;';
       btn.onclick = () => startGame(true);
-      
+
       const content = document.createElement('div');
       content.className = 'message-content';
       content.style.maxWidth = '90%';
       content.innerHTML = tableHtml;
       content.appendChild(btn);
-      
+
       const botMessage = document.createElement('div');
       botMessage.className = 'message bot';
       botMessage.appendChild(content);
@@ -783,12 +783,12 @@
       currentTypingIndicator = document.createElement('div');
       currentTypingIndicator.className = 'message bot';
       currentTypingIndicator.innerHTML = `
-        < div class="typing-indicator active" >
+                <div class="typing-indicator active">
                     <span></span>
                     <span></span>
                     <span></span>
-                </div >
-        `;
+                </div>
+            `;
       chatContainer.appendChild(currentTypingIndicator);
       scrollToBottom();
     }
@@ -804,7 +804,7 @@
       if (!text) return; // Safeguard against undefined messages
 
       const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${ sender }`;
+      messageDiv.className = `message ${sender}`;
       const contentDiv = document.createElement('div');
       contentDiv.className = 'message-content';
 

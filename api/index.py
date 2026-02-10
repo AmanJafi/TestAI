@@ -63,33 +63,24 @@ WORDS = {
 }
 
 EASY_PROMPT = """
-You are a helpful guide.
-Describe the word using very simple, direct, and obvious clues.
-Make it extremely easy for anyone to guess.
-Start your response with "[Difficulty: Easy] ".
+Describe the word using simple and direct clues.
 Never say the word itself.
 Max 3 sentences.
 """
 
 MEDIUM_PROMPT = """
-You are an abstract philosopher.
-Describe the word's essence rather than its function.
-Avoid shape, color, or direct usage.
-Start your response with "[Difficulty: Medium] ".
+Describe the word by its function and context.
+Avoid naming its category or direct synonyms.
 Never say the word itself.
 Max 3 sentences.
 """
 
 HARD_PROMPT = """
-You describe the given word as an abstract, indirect riddle.
-Start your response with "[Difficulty: Hard] ".
-
+Describe the given word as an abstract, indirect riddle.
 Rules:
 •  Never say the word itself
 •  Never define it
-•  Avoid common associations
-•  Speak through absence, consequence, or implication
-•  Write as if hiding the answer from an intelligent adversary
+•  Speak through implication
 •  Use at most 2 sentences
 """
 
@@ -109,7 +100,8 @@ GAME = {
     "hint_index": 0,
     "question_index": 0,
     "messages": [],
-    "finished": False
+    "finished": False,
+    "used_words": set()
 }
 
 def call_model(messages):
@@ -139,7 +131,15 @@ class GuessRequest(BaseModel):
 
 @app.post("/start")
 async def start_game():
-    word = random.choice(list(WORDS.keys()))
+    available_words = [w for w in WORDS.keys() if w not in GAME["used_words"]]
+    
+    if not available_words:
+        GAME["used_words"] = set()
+        available_words = list(WORDS.keys())
+        
+    word = random.choice(available_words)
+    GAME["used_words"].add(word)
+    
     all_hints = WORDS[word]
     selected_hints = random.sample(all_hints, min(len(all_hints), random.randint(2, 3)))
 

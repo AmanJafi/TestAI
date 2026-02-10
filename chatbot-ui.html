@@ -493,6 +493,11 @@
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
 
+        // Dynamically detect the API base URL
+        // If the page is opened as a local file, target localhost:80000
+        // If served by the backend, use relative paths
+        const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8000' : '';
+
         let isGameStarted = false;
 
         // Auto-resize textarea
@@ -530,7 +535,7 @@
 
             showTypingIndicator();
             try {
-                const response = await fetch('/start', { method: 'POST' });
+                const response = await fetch(`${API_BASE}/start`, { method: 'POST' });
                 const data = await response.json();
                 removeTypingIndicator();
                 addMessage(data.text, 'bot');
@@ -538,7 +543,7 @@
                 messageInput.placeholder = "Enter your guess or type 'hint'...";
             } catch (error) {
                 removeTypingIndicator();
-                addMessage("Failed to start game. Is the server running?", 'bot');
+                addMessage("Failed to start game. Is the server running? Run './run.sh' and access via http://localhost:8000", 'bot');
             }
         }
 
@@ -561,7 +566,7 @@
 
             try {
                 if (message.toLowerCase() === 'hint') {
-                    const response = await fetch('/next', { method: 'POST' });
+                    const response = await fetch(`${API_BASE}/next`, { method: 'POST' });
                     const data = await response.json();
                     removeTypingIndicator();
                     if (data.finished || data.message === "No more hints") {
@@ -574,7 +579,7 @@
                         addMessage(`[Clue ${data.question} - ${data.difficulty.toUpperCase()}] ${data.text}`, 'bot');
                     }
                 } else {
-                    const response = await fetch('/guess', {
+                    const response = await fetch(`${API_BASE}/guess`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ guess: message }),

@@ -530,7 +530,7 @@
 
             showTypingIndicator();
             try {
-                const response = await fetch('http://localhost:8000/start', { method: 'POST' });
+                const response = await fetch('/start', { method: 'POST' });
                 const data = await response.json();
                 removeTypingIndicator();
                 addMessage(data.text, 'bot');
@@ -561,7 +561,7 @@
 
             try {
                 if (message.toLowerCase() === 'hint') {
-                    const response = await fetch('http://localhost:8000/next', { method: 'POST' });
+                    const response = await fetch('/next', { method: 'POST' });
                     const data = await response.json();
                     removeTypingIndicator();
                     if (data.finished || data.message === "No more hints") {
@@ -574,7 +574,7 @@
                         addMessage(`[Clue ${data.question} - ${data.difficulty.toUpperCase()}] ${data.text}`, 'bot');
                     }
                 } else {
-                    const response = await fetch('http://localhost:8000/guess', {
+                    const response = await fetch('/guess', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ guess: message }),

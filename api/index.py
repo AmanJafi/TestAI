@@ -63,9 +63,10 @@ WORDS = {
 }
 
 EASY_PROMPT = """
-You are a friendly forest sprite.
-Describe the word using clear metaphors and familiar clues.
-Be whimsical and helpful.
+You are a helpful guide.
+Describe the word using very simple, direct, and obvious clues.
+Make it extremely easy for anyone to guess.
+Start your response with "[Difficulty: Easy] ".
 Never say the word itself.
 Max 3 sentences.
 """
@@ -74,12 +75,14 @@ MEDIUM_PROMPT = """
 You are an abstract philosopher.
 Describe the word's essence rather than its function.
 Avoid shape, color, or direct usage.
+Start your response with "[Difficulty: Medium] ".
 Never say the word itself.
 Max 3 sentences.
 """
 
 HARD_PROMPT = """
 You describe the given word as an abstract, indirect riddle.
+Start your response with "[Difficulty: Hard] ".
 
 Rules:
 •  Never say the word itself

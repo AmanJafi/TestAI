@@ -17,6 +17,10 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/admin/reveal",
+      "destination": "/api/index.py"
+    },
+    {
       "source": "/(.*)",
       "destination": "/chatbot-ui.html"
     }

@@ -108,31 +108,42 @@ WORDS = {
 }
 
 EASY_PROMPT = """
-Describe the word using simple and direct clues.
+Describe the word using simple but slightly cryptic clues.
 Never say the word itself.
+Use metaphors and avoid direct descriptions where possible.
 Max 3 sentences.
 """
 
 MEDIUM_PROMPT = """
-Describe the word by its function and context.
+Describe the word by its function and context in a mysterious way.
 Avoid naming its category or direct synonyms.
 Never say the word itself.
+Focus on the 'essence' of the object rather than its physical form.
 Max 3 sentences.
 """
 
 HARD_PROMPT = """
-Describe the given word as an abstract, indirect riddle.
+Describe the given word as an abstract, highly indirect riddle.
 Rules:
 •  Never say the word itself
 •  Never define it
-•  Speak through implication
+•  Speak through heavy implication and poetic imagery
 •  Use at most 2 sentences
 """
 
-def prompt_for_question(n, level):
-    if level == 1:
+def get_difficulty(level):
+    if level <= 3:
+        return "easy"
+    elif level <= 7:
+        return "medium"
+    else:
+        return "hard"
+
+def prompt_for_question(level):
+    difficulty = get_difficulty(level)
+    if difficulty == "easy":
         return EASY_PROMPT
-    elif level == 2:
+    elif difficulty == "medium":
         return MEDIUM_PROMPT
     else:
         return HARD_PROMPT
@@ -205,7 +216,7 @@ async def start_game(session_reset: bool = False):
     GAME["current_hints"] = 1 # Initial clue counts as 1 hint
 
     # Use prompt based on current level
-    system_prompt = prompt_for_question(1, GAME["level"])
+    system_prompt = prompt_for_question(GAME["level"])
 
     GAME["messages"] = [
         {"role": "system", "content": system_prompt},
@@ -217,7 +228,7 @@ async def start_game(session_reset: bool = False):
 
     return {
         "question": 1,
-        "difficulty": ["easy", "medium", "hard"][GAME["level"]-1],
+        "difficulty": get_difficulty(GAME["level"]),
         "level": GAME["level"],
         "text": clue
     }
@@ -234,7 +245,7 @@ async def next_hint():
         GAME["finished"] = True
         return {"message": "No more hints", "finished": True}
 
-    system_prompt = prompt_for_question(GAME["question_index"], GAME["level"])
+    system_prompt = prompt_for_question(GAME["level"])
     GAME["messages"][0] = {"role": "system", "content": system_prompt}
 
     if GAME["hint_index"] < len(GAME["hints"]):
@@ -249,11 +260,7 @@ async def next_hint():
     reply = call_model(GAME["messages"])
     GAME["messages"].append({"role": "assistant", "content": reply})
 
-    difficulty = (
-        "easy" if GAME["question_index"] <= 4
-        else "medium" if GAME["question_index"] <= 8
-        else "hard"
-    )
+    difficulty = get_difficulty(GAME["level"])
 
     return {
         "question": GAME["question_index"],
@@ -273,26 +280,27 @@ async def guess(request: GuessRequest):
     if user_guess == answer:
         GAME["finished"] = True
         
-        # Scoring logic
-        base_scores = {1: 50, 2: 75, 3: 100}
-        base = base_scores.get(GAME["level"], 100)
+        # Scoring logic refinement
+        difficulty = get_difficulty(GAME["level"])
+        if difficulty == "easy":
+            base = 50
+            min_score = 10
+        elif difficulty == "medium":
+            base = 75
+            min_score = 20
+        else: # hard
+            base = 100
+            min_score = 30
         
-        # Penalties: 5 pts per hint, 1 pt per guess.
-        # However, the user said "each hint ig like 5 points and each guess is 1 points".
-        # We'll assume the first hint (the initial clue) is free or counted. 
-        # Let's count all hints and guesses as requested.
-        hints_penalty = (GAME["current_hints"]) * 5
-        guesses_penalty = (GAME["current_guesses"]) * 1
+        # Penalties: -5 per hint (after 1st), -1 per guess (after 1st)
+        hints_penalty = (GAME["current_hints"] - 1) * 5
+        guesses_penalty = (GAME["current_guesses"] - 1) * 1
         
-        # To avoid negative scores, we'll clamp at a minimum score of 10.
-        # But wait, if they get it on first try, we should give a good score.
-        # Let's adjust: (base - (hints-1)*5 - (guesses-1)*1) 
-        # so getting it on 1st hint/1st guess gets the full base.
-        final_score = max(base - (GAME["current_hints"] - 1) * 5 - (GAME["current_guesses"] - 1) * 1, 10)
+        final_score = max(base - hints_penalty - guesses_penalty, min_score)
         
         stats = {
             "level": GAME["level"],
-            "difficulty": ["Easy", "Medium", "Hard"][GAME["level"]-1],
+            "difficulty": difficulty.capitalize(),
             "word": GAME["word"],
             "guesses": GAME["current_guesses"],
             "hints": GAME["current_hints"],
@@ -300,7 +308,7 @@ async def guess(request: GuessRequest):
         }
         GAME["session_history"].append(stats)
         
-        is_session_complete = GAME["level"] >= 3
+        is_session_complete = GAME["level"] >= 10
         if not is_session_complete:
             GAME["level"] += 1
 
